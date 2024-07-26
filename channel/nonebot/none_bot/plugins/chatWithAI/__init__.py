@@ -5,7 +5,9 @@ from nonebot.adapters.onebot.v11 import MessageEvent, Bot
 from nonebot import on_message
 from nonebot import logger
 from nonebot.rule import to_me
+from pydub import AudioSegment
 import re
+import os
 
 message = on_message(rule=to_me(), priority=9999999)
 
@@ -17,6 +19,8 @@ async def handle_message(bot: Bot, event: MessageEvent):
     msg_is_group = False  # 默认非群内消息
     session_list = []  # 获取到的session为 群组：group_groupId_senderId  私信：senderId
     msg = str(event.get_message()).strip()  # 原始信息 字符串类型
+    channel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    save_file_path = os.path.join(channel_path, "file")
 
     """
     CQ码解析
@@ -28,7 +32,13 @@ async def handle_message(bot: Bot, event: MessageEvent):
         if cq_code_json["CQ"] == "record":
             msg_type = "voice"
             file_dict = await bot.get_record(file=cq_code_json["file"], out_format="wma")
-            msg = file_dict["file"]
+            # input_file = file_dict["file"]
+            input_file = os.path.join(save_file_path, "test.amr")
+            output_file = os.path.join(save_file_path, "test.wma")
+            logger.info(input_file)
+            logger.info(output_file)
+            # 将语音 amr文件转为WAV文件
+            await convert_amr_to_wav(input_file, output_file)
         elif cq_code_json["CQ"] == "image":
             msg_type = "image"
             file_dict = await bot.get_image(file=cq_code_json['file'])
@@ -151,3 +161,14 @@ async def parse_cq_code(cq_msg: str):
         else:
             logger.warning("不支持当前消息类型！")
             return None
+
+
+async def convert_amr_to_wav(input_file, output_file):
+    """
+    将语音 amr文件转为WAV文件
+    """
+    # 加载 AMR 文件
+    audio = AudioSegment.from_file(input_file, format="amr")
+    # 导出为 WAV 文件
+    audio.export(output_file, format="wav")
+
