@@ -2,7 +2,8 @@ name: Golu-woc Docker Compacket
 
 on:
   push:
-    branches: [ "woc" ]
+    branches:
+      - woc
 
 jobs:
 
