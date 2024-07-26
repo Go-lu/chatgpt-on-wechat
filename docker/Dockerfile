@@ -49,6 +49,8 @@ RUN apt-get update && apt-get install -y \
     /tmp/* \
     /var/tmp/*
 
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
+
 # 设置工作目录
 WORKDIR /app
 
