@@ -42,6 +42,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     dbus-user-session \
     gcc \
+    make \
+    build-essential \
     curl && \
     apt autoremove -y && \
     apt clean && \
