@@ -5,7 +5,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent, Bot
 from nonebot import on_message
 from nonebot import logger
 from nonebot.rule import to_me
-from pydub import AudioSegment
+import subprocess
 import re
 import os
 
@@ -31,14 +31,12 @@ async def handle_message(bot: Bot, event: MessageEvent):
         # msg_type = "voice" if cq_code_json["CQ"] == "record" else "image" if cq_code_json["CQ"] == "image" else "file"
         if cq_code_json["CQ"] == "record":
             msg_type = "voice"
-            file_dict = await bot.get_record(file=cq_code_json["file"], out_format="wma")
-            # input_file = file_dict["file"]
-            input_file = os.path.join(save_file_path, "test.amr")
-            output_file = os.path.join(save_file_path, "test.wma")
-            logger.info(input_file)
-            logger.info(output_file)
-            # 将语音 amr文件转为WAV文件
-            await convert_amr_to_wav(input_file, output_file)
+            file_dict = await bot.get_record(file=cq_code_json["file"], out_format="amr")
+            input_file = file_dict["file"]
+            output_file = os.path.join(save_file_path, f"{cq_code_json['file'].split('.')[0]}.mp3")
+            # 将语音 amr文件转为mp3文件
+            await convert_silk_to_mp3(input_file, output_file)
+            msg = output_file
         elif cq_code_json["CQ"] == "image":
             msg_type = "image"
             file_dict = await bot.get_image(file=cq_code_json['file'])
@@ -163,12 +161,17 @@ async def parse_cq_code(cq_msg: str):
             return None
 
 
-async def convert_amr_to_wav(input_file, output_file):
+async def convert_silk_to_mp3(input_file, output_file):
     """
-    将语音 amr文件转为WAV文件
+    将silk语音文件转为mp3
     """
-    # 加载 AMR 文件
-    audio = AudioSegment.from_file(input_file, format="amr")
-    # 导出为 WAV 文件
-    audio.export(output_file, format="wav")
+    channel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    silk_v3_tool_path = os.path.join(channel_path, "utils/silk-v3-decoder/converter.sh")
+    try:
+        subprocess.run([
+            silk_v3_tool_path, input_file, output_file
+        ], check=True, shell=True)
+        logger.info(f"转换成功：{output_file}")
+    except subprocess.CalledProcessError as e:
+        logger.info(f"转换失败：{e}")
 
