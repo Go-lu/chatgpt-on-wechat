@@ -48,6 +48,14 @@ RUN apt-get update && apt-get install -y \
     wget \
     libopencore-amrnb-dev \
     libopencore-amrwb-dev \
+    libfdk-aac-dev \
+    libmp3lame-dev \
+    libopus-dev \
+    libvorbis-dev \
+    libvpx-dev \
+    libx264-dev \
+    libx265-dev \
+    libnuma-dev \
     curl && \
     apt autoremove -y && \
     apt clean && \
@@ -60,7 +68,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
     tar xjf ffmpeg-snapshot.tar.bz2 && \
     cd ffmpeg && \
-    ./configure --enable-gpl --enable-libopencore-amrnb --enable-libopencore-amrwb && \
+    ./configure --enable-gpl --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-version3 --enable-libfdk-aac --enable-libmp3lame --enable-libopus --enable-libvorbis --enable-libvpx --enable-libx264 --enable-libx265 --enable-nonfree && \
     make && \
     make install
 
