@@ -19,6 +19,9 @@ RUN echo "${TZ}" > /etc/timezone \
 
 # 安装依赖
 RUN apt-get update && apt-get install -y \
+    software-properties-common \
+    && add-apt-repository -y ppa:jonathonf/ffmpeg-4 \
+    && apt-get update && apt-get install -y \
     sudo \
     supervisor \
     libnss3 \
