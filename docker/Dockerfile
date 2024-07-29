@@ -38,12 +38,16 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     libatspi2.0-0 \
     libx11-xcb1 \
-    ffmpeg \
     unzip \
     dbus-user-session \
     gcc \
     make \
     build-essential \
+    yasm \
+    pkg-config \
+    wget \
+    libopencore-amrnb-dev \
+    libopencore-amrwb-dev \
     curl && \
     apt autoremove -y && \
     apt clean && \
@@ -52,7 +56,17 @@ RUN apt-get update && apt-get install -y \
     /tmp/* \
     /var/tmp/*
 
-ENV FFMPEG_PATH=/usr/bin/ffmpeg
+# 下载并解压FFmpeg源码
+RUN wget https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
+    tar xjf ffmpeg-snapshot.tar.bz2 && \
+    cd ffmpeg && \
+    ./configure --enable-gpl --enable-libopencore-amrnb --enable-libopencore-amrwb && \
+    make && \
+    make install
+
+# 清理不再需要的文件
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* ffmpeg-snapshot.tar.bz2
 
 # 设置工作目录
 WORKDIR /app
