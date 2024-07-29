@@ -75,9 +75,10 @@ RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
 VOLUME /app/napcat/config
 VOLUME /root/.config/QQ
 
-# 获取 NapCatQQ 最新版本并下载
+# 获取 NapCatQQ 最新版本并下载, 1.7.0有致命bug，暂定1.6.7
 RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
-    napcat_version=$(curl -s "https://api.github.com/repos/NapNeko/NapCatQQ/releases/latest" | jq -r '.tag_name') && \
+    napcat_version="1.6.7" && \
+#    napcat_version=$(curl -s "https://api.github.com/repos/NapNeko/NapCatQQ/releases/latest" | jq -r '.tag_name') && \
     if [ "$napcat_version" = "" ]; then \
         echo "无法获取NapCatQQ版本，请检查错误。" && exit 1; \
     fi && \
