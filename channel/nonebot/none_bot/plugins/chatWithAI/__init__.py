@@ -33,10 +33,11 @@ async def handle_message(bot: Bot, event: MessageEvent):
             msg_type = "voice"
             file_dict = await bot.get_record(file=cq_code_json["file"], out_format="amr")
             input_file = file_dict["file"]
-            output_file = os.path.join(save_file_path, f"{cq_code_json['file'].split('.')[0]}.mp3")
+            output_file = "output.mp3"
             # 将语音 amr文件转为mp3文件
             await convert_silk_to_mp3(input_file, output_file)
-            msg = output_file
+            msg = os.path.join(input_file.replace(cq_code_json['file'], ""),
+                               f"{cq_code_json['file'].split('.')[0]}.output.mp3")
         elif cq_code_json["CQ"] == "image":
             msg_type = "image"
             res = await bot.call_api("get_image", file=cq_code_json['file'])
@@ -167,6 +168,8 @@ async def convert_silk_to_mp3(input_file, output_file):
     """
     将silk语音文件转为mp3
     """
+    logger.info(f"原始音频文件：{input_file}")
+    logger.info(f"转换后音频文件：{output_file}")
     channel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
     silk_v3_tool_path = os.path.join(channel_path, "utils\\silk-v3-decoder\\converter.sh")
     if os.name == "nt":  # win端暂时无法获取语音文件，待实现，此处仅供测试调试
@@ -183,7 +186,7 @@ async def convert_silk_to_mp3(input_file, output_file):
         try:
             subprocess.run([
                 silk_v3_tool_path, input_file, output_file
-            ], check=True, shell=True)
+            ], check=True)
             logger.info(f"转换成功：{output_file}")
         except subprocess.CalledProcessError as e:
             logger.info(f"转换失败：{e}")

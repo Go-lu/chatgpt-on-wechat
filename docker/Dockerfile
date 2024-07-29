@@ -96,7 +96,7 @@ RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
         download_arch="$arch"; \
     fi && \
     curl -L "$napcat_download_url" -o "NapCat.linux.$download_arch.zip" && \
-    chmod +x /app/channel/nonebot/utils/silk-v3-decoder/converter.sh
+    chmod 777 /app/channel/nonebot/utils/silk-v3-decoder/converter.sh
 
 # 安装项目依赖
 RUN pip install --upgrade pip
