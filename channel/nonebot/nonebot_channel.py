@@ -1,8 +1,6 @@
 import os
-import io
 import time
 
-import requests
 import nonebot
 from nonebot.adapters.onebot.v11 import Adapter, Bot
 from pathlib import Path
@@ -11,7 +9,7 @@ from bridge.context import Context
 from bridge.reply import Reply, ReplyType
 from channel.chat_channel import ChatChannel
 from common.singleton import singleton
-from common.utils import compress_imgfile, fsize, split_string_by_utf8_length
+from common.utils import split_string_by_utf8_length
 from config import conf
 from common.log import logger
 from voice.audio_convert import any_to_amr, split_audio
@@ -23,6 +21,7 @@ MAX_UTF8_LEN = 2048
 
 @singleton
 class NoneBotChannel(ChatChannel):
+    NOT_SUPPORT_REPLYTYPE = []
     """
     NoneBot消息通道
     """
@@ -57,12 +56,16 @@ class NoneBotChannel(ChatChannel):
                 logger.info("[NoneBot] text too long, split into {} parts".format(len(texts)))
             for i, text in enumerate(texts):
                 # 发送文本消息
-                asyncio.run(bot.send_msg(
-                    message_type="group" if is_group else "private",
-                    user_id=context["msg"].from_user_id,
-                    group_id=receiver if is_group else None,
-                    message=text
-                ))
+                try:
+                    asyncio.run(bot.send_msg(
+                        message_type="group" if is_group else "private",
+                        user_id=context["msg"].from_user_id,
+                        group_id=receiver if is_group else None,
+                        message=text
+                    ))
+                except Exception as e:
+                    logger.error(f"[NoneBot] send message failed: {e}")
+                    return
                 if i != len(texts) - 1:
                     time.sleep(0.5)  # 休眠0.5秒，防止发送过快乱序
             logger.info("[NoneBot] send message to {}: {}".format(context["msg"].from_user_nickname, reply_text))
@@ -74,9 +77,22 @@ class NoneBotChannel(ChatChannel):
                 any_to_amr(file_path, amr_file)
                 duration, files = split_audio(amr_file, 60 * 1000)
                 if len(files) > 1:
-                    logger.info("[NoneBot] voice too long, {}s > 60s, split into {} parts".format(duration / 1000.0, len(files)))
+                    logger.info(
+                        "[NoneBot] voice too long, {}s > 60s, split into {} parts".format(duration / 1000.0, len(files))
+                    )
                 for path in files:
-                    # TODO 发送消息 voice
+                    # 发送消息 voice
+                    try:
+                        asyncio.run(bot.send_msg(
+                            message_type="group" if is_group else "private",
+                            user_id=context["msg"].from_user_id,
+                            group_id=receiver if is_group else None,
+                            message="[CQ:record,file=file:///{}]".format(path),
+                            auto_escape=False
+                        ))
+                    except Exception as e:
+                        logger.error(f"[NoneBot] upload voice failed: {e}")
+                        return
                     time.sleep(1)
             except Exception as e:
                 logger.error(f"[NoneBot] send voice failed: {e}")
@@ -88,43 +104,39 @@ class NoneBotChannel(ChatChannel):
             except Exception as e:
                 logger.error(f"[NoneBot] remove voice file failed: {e}")
             logger.info(f"[NoneBot] send voice to {context['msg'].from_user_nickname}: {reply.content}")
-        elif reply.type == ReplyType.IMAGE_URL:  # 从网络下载图片
+        elif reply.type == ReplyType.IMAGE_URL:
             img_url = reply.content
-            pic_res = requests.get(img_url, stream=True)
-            image_storage = io.BytesIO()
-            for block in pic_res.iter_content(1024):
-                image_storage.write(block)
-            sz = fsize(image_storage)
-            if sz >= 10 * 1024 * 1024:
-                logger.info("[NoneBot] image too large, ready to compress, sz={}".format(sz))
-                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info("[NoneBot] image compressed, sz={}".format(fsize(image_storage)))
-            image_storage.seek(0)
             try:
-                # TODO 发送图片
-                pass
+                # 发送图片
+                asyncio.run(bot.send_msg(
+                    message_type="group" if is_group else "private",
+                    user_id=context["msg"].from_user_id,
+                    group_id=receiver if is_group else None,
+                    message="[CQ:image,file={}]".format(img_url),
+                    auto_escape=False
+                ))
             except Exception as e:
                 logger.error(f"[NoneBot] send image failed: {e}")
                 return
             logger.info(f"[NoneBot] send image to {context['msg'].from_user_nickname}: {reply.content}")
         elif reply.type == ReplyType.IMAGE:  # 本地图片
             image_storage = reply.content
-            sz = fsize(image_storage)
-            if sz >= 10 * 1024 * 1024:
-                logger.info("[NoneBot] image too large, ready to compress, sz={}".format(sz))
-                image_storage = compress_imgfile(image_storage, 10 * 1024 * 1024 - 1)
-                logger.info("[NoneBot] image compressed, sz={}".format(fsize(image_storage)))
-            image_storage.seek(0)
+            if type(image_storage) != str:
+                logger.warning("非本地路径图片暂不支持处理，联系开发者适配或自己完善此方法~")
+                return
             try:
-                # TODO 发送图片
-                pass
+                # 发送本地图片
+                asyncio.run(bot.send_msg(
+                    message_type="group" if is_group else "private",
+                    user_id=context["msg"].from_user_id,
+                    group_id=receiver if is_group else None,
+                    message="[CQ:image,file=file:///{}]".format(image_storage),
+                    auto_escape=False
+                ))
             except Exception as e:
                 logger.error(f"[NoneBot] send image failed: {e}")
                 return
             logger.info(f"[NoneBot] send image to {context['msg'].from_user_nickname}: {reply.content}")
-
-        # 通过nonebot发送消息
-        pass
 
     def startup(self):
         # 启动nonebot

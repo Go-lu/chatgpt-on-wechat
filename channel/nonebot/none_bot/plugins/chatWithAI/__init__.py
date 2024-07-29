@@ -39,6 +39,8 @@ async def handle_message(bot: Bot, event: MessageEvent):
             msg = output_file
         elif cq_code_json["CQ"] == "image":
             msg_type = "image"
+            res = await bot.call_api("get_image", file=cq_code_json['file'])
+            logger.debug(res)
             file_dict = await bot.get_image(file=cq_code_json['file'])
             msg = file_dict["file"]
         elif cq_code_json["CQ"] == "file":
@@ -166,10 +168,11 @@ async def convert_silk_to_mp3(input_file, output_file):
     将silk语音文件转为mp3
     """
     channel_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-    silk_v3_tool_path = os.path.join(channel_path, "utils/silk-v3-decoder/converter.sh")
-    if os.name == "nt":
-        silk_v3_tool_path = os.path.join(channel_path, "utils/silk-v3-decoder/windows/silk_v3_decoder.exe")
-        output_pcm_path = os.path.join(channel_path, "file/output.pcm")
+    silk_v3_tool_path = os.path.join(channel_path, "utils\\silk-v3-decoder\\converter.sh")
+    if os.name == "nt":  # win端暂时无法获取语音文件，待实现，此处仅供测试调试
+        silk_v3_tool_path = os.path.join(channel_path, "utils\\silk-v3-decoder\\windows\\silk_v3_decoder.exe")
+        input_file = os.path.join(channel_path, "file\\test.amr")
+        output_pcm_path = os.path.join(channel_path, "file\\output.pcm")
         # 将silk转换为pcm
         await convert_silk_to_pcm(silk_v3_tool_path, input_file, output_pcm_path)
         # 将pcm转为MP3

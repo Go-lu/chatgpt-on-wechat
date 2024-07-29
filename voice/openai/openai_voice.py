@@ -12,6 +12,7 @@ from voice.voice import Voice
 import requests
 from common import const
 import datetime, random
+import os
 
 class OpenaiVoice(Voice):
     def __init__(self):
@@ -58,7 +59,14 @@ class OpenaiVoice(Voice):
                 'voice': conf().get("tts_voice_id") or "alloy"
             }
             response = requests.post(url, headers=headers, json=data)
-            file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3"
+            # 此处对语音文件存储路径优化，修复找不到语音文件bug
+            project_path = os.path.join(os.path.join(os.path.join(os.path.abspath(
+                os.path.join(os.path.dirname(__file__),
+                             "../..")), "channel"), "nonebot"), "file")
+            file_name = os.path.join(
+                project_path,
+                datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3")
+            # file_name = "tmp/" + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + str(random.randint(0, 1000)) + ".mp3"
             logger.debug(f"[OPENAI] text_to_Voice file_name={file_name}, input={text}")
             with open(file_name, 'wb') as f:
                 f.write(response.content)
