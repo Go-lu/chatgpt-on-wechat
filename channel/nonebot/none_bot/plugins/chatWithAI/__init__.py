@@ -40,8 +40,6 @@ async def handle_message(bot: Bot, event: MessageEvent):
                                f"{cq_code_json['file'].split('.')[0]}.output.mp3")
         elif cq_code_json["CQ"] == "image":
             msg_type = "image"
-            res = await bot.call_api("get_image", file=cq_code_json['file'])
-            logger.debug(res)
             file_dict = await bot.get_image(file=cq_code_json['file'])
             msg = file_dict["file"]
         elif cq_code_json["CQ"] == "file":
