@@ -15,7 +15,7 @@ jobs:
 
     - name: Set Version With Timestamp
       id: set_version
-      run: echo "VERSION=$(date +%s)" >> $GITHUB_ENV
+      run: echo "VERSION=1.0" >> $GITHUB_ENV
 
     - name: Login to DockerHub
       uses: docker/login-action@v2
