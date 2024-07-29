@@ -19,9 +19,6 @@ RUN echo "${TZ}" > /etc/timezone \
 
 # 安装依赖
 RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    && add-apt-repository -y ppa:jonathonf/ffmpeg-4 \
-    && apt-get update && apt-get install -y \
     sudo \
     supervisor \
     libnss3 \
@@ -49,16 +46,6 @@ RUN apt-get update && apt-get install -y \
     yasm \
     pkg-config \
     wget \
-    libopencore-amrnb-dev \
-    libopencore-amrwb-dev \
-    libfdk-aac-dev \
-    libmp3lame-dev \
-    libopus-dev \
-    libvorbis-dev \
-    libvpx-dev \
-    libx264-dev \
-    libx265-dev \
-    libnuma-dev \
     curl && \
     apt autoremove -y && \
     apt clean && \
@@ -66,6 +53,37 @@ RUN apt-get update && apt-get install -y \
     /var/lib/apt/lists/* \
     /tmp/* \
     /var/tmp/*
+
+# 编译并安装 libfdk-aac
+RUN apt-get update && apt-get install -y \
+    autoconf \
+    automake \
+    libtool \
+    git && \
+    git clone https://github.com/mstorsjo/fdk-aac.git && \
+    cd fdk-aac && \
+    autoreconf -fiv && \
+    ./configure && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf fdk-aac && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装其余必要的库
+RUN apt-get update && apt-get install -y \
+    libopencore-amrnb-dev \
+    libopencore-amrwb-dev \
+    libmp3lame-dev \
+    libopus-dev \
+    libvorbis-dev \
+    libvpx-dev \
+    libx264-dev \
+    libx265-dev \
+    libnuma-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # 下载并解压FFmpeg源码
 RUN wget https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 && \
